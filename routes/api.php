@@ -14,6 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::middleware('check-telegram-secret-token')
+    ->post('/telegram/handler-webhook/', \App\Http\Controllers\Api\TelegramHandlerWebhookController::class)
+    ->name('telegram-handler-webhook');
