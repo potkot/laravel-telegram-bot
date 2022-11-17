@@ -83,7 +83,19 @@ class StartCommand extends Command
         $waterBase = $this->waterBaseService->getWaterBaseByUUID($this->text);
         $volume = $this->waterBaseService->getVolumeByWaterBase($this->text);
 
-        $response = $this->telegram->sendMessage($this->chatId, __($waterBase['name'] . '(' . $waterBase['region'] . ') volume: :volume', ['volume' => $volume]));
+        $message = __($waterBase['name'] . '(' . $waterBase['region'] . ') volume: :volume', ['volume' => $volume]);
+
+        $keyboardItems = [
+            [
+                [
+                    'text' => __('Select region again?'),
+                    'callback_data' => '/start'
+                ]
+
+            ]
+        ];
+
+        $response = $this->telegram->sendMessage($this->chatId, $message, ["inline_keyboard" => $keyboardItems]);
         if ($response !== false) {
             $this->stateStore->clearState($this->chatId, $this);
         }
