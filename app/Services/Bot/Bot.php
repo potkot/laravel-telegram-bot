@@ -38,8 +38,8 @@ class Bot
      */
     public function handle(TelegramWebhookRequest $request): void
     {
-        $text = $request->json('message.text');
-        $chatId = $request->json('message.chat.id');
+        $text = $request->json('text');
+        $chatId = $request->json('chat_id');
 
         /**
          * Проверяем, находится ли чат в режиме ожидания действий пользователя

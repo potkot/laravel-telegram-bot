@@ -2,10 +2,13 @@
 
 namespace App\Services\Bot\Commands;
 
+use App\Services\WaterBaseService;
+
 class StartCommand extends Command
 {
     protected int $chatId;
     private string $text;
+    private WaterBaseService $waterBaseService;
 
     public static function getName(): string
     {
@@ -31,32 +34,58 @@ class StartCommand extends Command
         $this->chatId = $chatId;
         $this->text = $text;
 
+        /**
+         * Подключаем сервис для работы с водобазами
+         */
+        $this->waterBaseService = new WaterBaseService();
+
+        /**
+         * Если нужно выполнить какой-то шаг, то выполняем его.
+         */
         if ($step && in_array($step, get_class_methods($this))) {
             $this->$step();
             return;
         }
 
-        $this->telegram->sendMessage($this->chatId, __('Enter region: '));
-        $this->stateStore->storeState($this->chatId, $this, 'readRegion');
+        /**
+         * Получаем список регионов и отправляем его в сообщении в виде кнопок
+         */
+        $keyboardItems = $this->waterBaseService->getRegions();
+        $response = $this->telegram->sendMessage($this->chatId, __('Select region: '), ["inline_keyboard" => $keyboardItems]);
+
+        if ($response !== false) {
+            /**
+             * Ставим отметку, что бот в ожидании и указываем какой шаг следующий
+             */
+            $this->stateStore->storeState($this->chatId, $this, 'readRegion');
+        }
     }
 
     /**
      * Втрой шаг
      * @return void
      */
-    private function readRegion()
+    private function readRegion(): void
     {
-        $this->telegram->sendMessage($this->chatId, __('Enter water base: '));
-        $this->stateStore->storeState($this->chatId, $this, 'readWaterBase');
+        $keyboardItems = $this->waterBaseService->getWatersBasesByRegion($this->text);
+        $response = $this->telegram->sendMessage($this->chatId, __('Select water base: '), ["inline_keyboard" => $keyboardItems]);
+        if ($response !== false) {
+            $this->stateStore->storeState($this->chatId, $this, 'readWaterBase');
+        }
     }
 
     /**
      * Третий шаг
      * @return void
      */
-    private function readWaterBase()
+    private function readWaterBase(): void
     {
-        $this->telegram->sendMessage($this->chatId, __('Water volumes list'));
-        $this->stateStore->clearState($this->chatId, $this);
+        $waterBase = $this->waterBaseService->getWaterBaseByUUID($this->text);
+        $volume = $this->waterBaseService->getVolumeByWaterBase($this->text);
+
+        $response = $this->telegram->sendMessage($this->chatId, __($waterBase['name'] . '(' . $waterBase['region'] . ') volume: :volume', ['volume' => $volume]));
+        if ($response !== false) {
+            $this->stateStore->clearState($this->chatId, $this);
+        }
     }
 }

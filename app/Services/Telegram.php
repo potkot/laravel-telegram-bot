@@ -37,13 +37,17 @@ class Telegram
         return $this->key;
     }
 
-    public function sendMessage(int $chatId, string $message): bool|array
+    public function sendMessage(int $chatId, string $message, array $replyMarkup = []): bool|array
     {
         $data = [
             "chat_id" => $chatId,
             "text" => $message,
-            "parse_mode" => "HTML"
+            "parse_mode" => "HTML",
         ];
+
+        if (count($replyMarkup)) {
+            $data["reply_markup"] = json_encode($replyMarkup);
+        }
 
         return $this->sendPostRequest('sendMessage', $data);
     }
