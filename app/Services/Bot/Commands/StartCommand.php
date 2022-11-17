@@ -83,7 +83,7 @@ class StartCommand extends Command
         $waterBase = $this->waterBaseService->getWaterBaseByUUID($this->text);
         $volume = $this->waterBaseService->getVolumeByWaterBase($this->text);
 
-        $message = __($waterBase['name'] . '(' . $waterBase['region'] . ') volume: :volume', ['volume' => $volume]);
+        $message = __($waterBase['name'] . "(" . $waterBase['region'] . ")\n <b>Volume: :volume</b>", ['volume' => $volume]);
 
         $keyboardItems = [
             [
